@@ -1,0 +1,31 @@
+Port 22
+Protocol 2
+
+PermitRootLogin no
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+ChallengeResponseAuthentication no
+PubkeyAuthentication yes
+
+UsePAM yes
+AllowAgentForwarding no
+AllowTcpForwarding no
+X11Forwarding no
+PermitTunnel no
+
+LoginGraceTime 20
+MaxAuthTries 3
+MaxSessions 2
+ClientAliveInterval 300
+ClientAliveCountMax 2
+
+IgnoreRhosts yes
+HostbasedAuthentication no
+PermitEmptyPasswords no
+
+StrictModes yes
+SyslogFacility AUTH
+LogLevel VERBOSE
+
+AllowUsers tu_usuario
+Subsystem sftp /usr/lib/ssh/sftp-server

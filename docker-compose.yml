@@ -1,0 +1,58 @@
+services:
+  app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    container_name: personal_app
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      - db
+    networks:
+      - internal
+    expose:
+      - "3000"
+    volumes:
+      - app_data:/app/data
+
+  db:
+    image: postgres:16-alpine
+    container_name: personal_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - internal
+
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: personal_nginx
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+      - ./nginx/html:/usr/share/nginx/html:ro
+    networks:
+      - internal
+      - public
+
+volumes:
+  app_data:
+  db_data:
+
+networks:
+  internal:
+    driver: bridge
+    internal: true
+  public:
+    driver: bridge

@@ -1,31 +1,76 @@
+# =====================================================================
+# SSH SERVER HARDENING CONFIGURATION
+# =====================================================================
+
+# Puerto de escucha. Cambiar el puerto predeterminado (22) mitiga ataques de fuerza bruta automatizados.
 Port 22
+
+# Forzar el uso exclusivo de la versión 2 del protocolo SSH (la versión 1 es insegura).
 Protocol 2
 
+# Deshabilitar el acceso directo al usuario root. Obliga el uso de 'sudo' tras login de usuario.
 PermitRootLogin no
+
+# Deshabilitar autenticación por contraseña. Solo se permite el acceso mediante intercambio de llaves.
 PasswordAuthentication no
 KbdInteractiveAuthentication no
 ChallengeResponseAuthentication no
+
+# Habilitar autenticación por llave pública (RSA, Ed25519).
 PubkeyAuthentication yes
 
+# Uso del módulo de autenticación conectable (PAM).
 UsePAM yes
+
+# Restricción de características de túneles y reenvío para evitar saltos de red no autorizados (Lateral Movement).
 AllowAgentForwarding no
 AllowTcpForwarding no
 X11Forwarding no
 PermitTunnel no
 
+# Tiempo máximo (segundos) para completar la autenticación antes de cerrar la conexión.
 LoginGraceTime 20
+
+# Número máximo de intentos de autenticación antes de que la sesión sea bloqueada por el servidor.
 MaxAuthTries 3
+
+# Limitar sesiones simultáneas por conexión de red.
 MaxSessions 2
+
+# Control de inactividad: Envía un mensaje al cliente cada 300s para verificar que sigue vivo.
+# Terminación automática si el cliente no responde tras 2 intentos (600s totales).
 ClientAliveInterval 300
 ClientAliveCountMax 2
 
+# Seguridad de archivos y hosts: Ignorar archivos .rhosts y deshabilitar autenticación basada en host.
 IgnoreRhosts yes
 HostbasedAuthentication no
 PermitEmptyPasswords no
 
+# Verificación estricta de permisos de archivos y carpetas (.ssh/ y authorized_keys) antes de aceptar el login.
 StrictModes yes
+
+# Configuración de Logs: Registro detallado de intentos de acceso para auditorías de seguridad.
 SyslogFacility AUTH
 LogLevel VERBOSE
 
+# Lista blanca de usuarios: Solo los usuarios aquí listados tienen permitido el acceso al servicio.
 AllowUsers tu_usuario
+# Si se desea permitir grupos enteros: # AllowGroups nombre_del_grupo
+
+# Configuración del subsistema SFTP. 
+# Para enjaular (Chroot) al usuario en su home, se usaría:
+# ForceCommand internal-sftp
+# ChrootDirectory %h
 Subsystem sftp /usr/lib/ssh/sftp-server
+
+# =====================================================================
+# SUGERENCIAS ADICIONALES DE SEGURIDAD (OPCIONALES)
+# =====================================================================
+
+# Para restringir algoritmos de cifrado débiles y forzar curvas elípticas modernas:
+# Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com
+# KexAlgorithms curve25519-sha256@libssh.org
+
+# Para mostrar un banner legal antes del login:
+# Banner /etc/issue.net

@@ -1,0 +1,36 @@
+[Unit]
+# Descripción breve del servicio.
+Description=Ejecución de script bash
+
+# Orden de arranque; espera a que la red esté activa antes de iniciar.
+After=network.target
+
+[Service]
+# Comportamiento del proceso; 'simple' asume que no realiza bifurcaciones (forks).
+Type=simple
+
+# Usuario del sistema que ejecuta el proceso.
+User=mi_usuario
+
+# Grupo del sistema que ejecuta el proceso.
+Group=mi_grupo
+
+# Directorio de trabajo base donde se posiciona el servicio.
+WorkingDirectory=/opt/mi_proyecto/
+
+# Comando de ejecución principal (requiere rutas absolutas).
+ExecStart=/bin/bash /opt/mi_proyecto/script.sh
+
+# Política de reinicio; 'on-failure' reinicia si el proceso termina con error.
+Restart=on-failure
+
+# Tiempo de espera en segundos antes de aplicar el reinicio.
+RestartSec=5
+
+# Redirección de la salida estándar y de errores a los registros del sistema.
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+# Nivel de ejecución (target) en el que se habilita el servicio al inicio.
+WantedBy=multi-user.target

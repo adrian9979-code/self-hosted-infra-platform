@@ -1,0 +1,77 @@
+===============================================================================
+SISTEMAS DE ARCHIVOS EN LINUX: CASOS DE USO Y ESPECIFICACIONES TÉCNICAS
+===============================================================================
+
+1. EXT4 (Fourth Extended Filesystem)
+------------------------------------
+- CASO DE USO: Particiones /boot, sistemas heredados y servidores donde la 
+  estabilidad absoluta prima sobre las funcionalidades modernas.
+- ATRIBUTOS CLAVE:
+    * Journaling: Registro de cambios para evitar corrupción tras fallos de energía.
+    * Compatibilidad: Soporte universal en todos los kernels y cargadores de arranque.
+- DETALLES TÉCNICOS:
+    * Gestión de Inodos: Los inodos se asignan de forma ESTÁTICA durante el 
+      formateo. Si se crean millones de archivos pequeños, se pueden agotar 
+      los inodos antes que el espacio en disco.
+    * Tamaño máximo de archivo: 16 TB.
+    * Tamaño máximo de volumen: 1 EB.
+
+2. XFS (High-Performance Journaled File System)
+-----------------------------------------------
+- CASO DE USO: Grandes volúmenes de datos, bases de datos masivas y sistemas 
+  con alta concurrencia de lectura/escritura paralela.
+- ATRIBUTOS CLAVE:
+    * Escalabilidad: Excelente rendimiento en archivos de gran tamaño.
+    * Inodos Dinámicos: A diferencia de EXT4, XFS crea inodos según la demanda, 
+      lo que lo hace ideal para sistemas con una cantidad masiva de archivos.
+- DETALLES TÉCNICOS:
+    * Arquitectura basada en B+ Trees para la localización eficiente de datos.
+    * Soporta cuotas de disco por proyecto y desfragmentación en línea.
+    * Es el sistema de archivos por defecto en distribuciones como RHEL.
+
+3. BTRFS (B-Tree File System)
+-----------------------------
+- CASO DE USO: Partición raíz (/), estaciones de trabajo y sistemas de backup 
+  donde la integridad de los datos es prioritaria.
+- ATRIBUTOS CLAVE:
+    * Copy-on-Write (CoW): Los datos no se sobrescriben; se escriben en bloques 
+      libres nuevos, lo que permite snapshots instantáneos y atómicos.
+    * Subvolúmenes: Permite crear "particiones lógicas" compartiendo el mismo 
+      espacio físico sin necesidad de redimensionar.
+    * Self-healing: Uso de checksums para detectar y reparar "bit rot".
+- DETALLES TÉCNICOS:
+    * Compresión transparente (zlib, lzo, zstd) integrada.
+    * Gestión nativa de RAID 0, 1 y 10 sin necesidad de mdadm.
+
+4. ZFS (Zettabyte File System - Nativo de Solaris/BSD)
+------------------------------------------------------
+- CASO DE USO: Almacenamiento masivo empresarial, NAS de alto rendimiento y 
+  servidores críticos (vía ZFS-on-Linux).
+- ATRIBUTOS CLAVE:
+    * Pool de almacenamiento: Elimina el concepto tradicional de partición; el 
+      sistema de archivos crece dinámicamente sobre un "pool" de discos.
+    * ARC (Adaptive Replacement Cache): Uso inteligente de la memoria RAM como 
+      caché de lectura mucho más eficiente que el Page Cache estándar de Linux.
+- DETALLES TÉCNICOS:
+    * Direccionamiento de 128 bits (capacidad virtualmente ilimitada).
+    * Deduplicación de datos a nivel de bloque para optimizar el espacio.
+
+5. F2FS (Flash-Friendly File System)
+------------------------------------
+- CASO DE USO: Dispositivos con memoria NAND (tarjetas SD, unidades NVMe, USB).
+- ATRIBUTOS CLAVE:
+    * Log-Structured: Minimiza el desgaste de las celdas de memoria al agrupar 
+      escrituras en bloques secuenciales.
+    * Rendimiento: Supera a EXT4 en latencia de escritura en dispositivos flash.
+- DETALLES TÉCNICOS:
+    * Diseñado teniendo en cuenta la geometría física de los chips NAND para 
+      evitar el "Write Amplification".
+
+6. Comparativa Técnica de Nodos y Estructura
+--------------------------------------------
+- EXT4: Inodos fijos (Static Allocation). Menos flexible pero muy predecible.
+- XFS/BTRFS: Inodos dinámicos (Dynamic Allocation). Mejor manejo de metadatos 
+  en sistemas con variabilidad extrema de tipos de archivos.
+- BTRFS/ZFS: Basados en CoW. Penalización mínima en fragmentación a cambio de 
+  una seguridad de datos muy superior (Snaphots y Rollbacks).
+===============================================================================

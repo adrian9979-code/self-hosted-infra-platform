@@ -1,8 +1,17 @@
+# =====================================================================
+# INFRASTRUCTURE AS CODE: SELF-HOSTED STACK
+# Incluye: Aplicación Core, Proxy Inverso, Seguridad DNS y Monitoreo
+# =====================================================================
+
 services:
+  # =====================================================================
+  # 1. CORE APPLICATION & DATABASE
+  # =====================================================================
   app:
     build:
       context: ./app
       dockerfile: Dockerfile
+    # Sugerencia: Para despliegues en producción, es preferible usar una imagen pre-construida (image: mi_repo/app:v1) en lugar de la directiva 'build'.
     container_name: personal_app
     restart: unless-stopped
     env_file:
@@ -28,17 +37,27 @@ services:
       - db_data:/var/lib/postgresql/data
     networks:
       - internal
+    # Sugerencia de Resiliencia: Para evitar que 'app' arranque antes de que la BD esté lista, se puede implementar un Healthcheck:
+    # healthcheck:
+    #   test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+    #   interval: 10s
+    #   retries: 5
 
+  # =====================================================================
+  # 2. INGRESS & PROXY
+  # =====================================================================
   nginx:
     image: nginx:1.27-alpine
     container_name: personal_nginx
     restart: unless-stopped
     depends_on:
       - app
+    # Si se requiere automatización de certificados SSL/TLS y auto-descubrimiento de contenedores, considerar migrar a 'Traefik'.
     ports:
       - "80:80"
       - "443:443"
     volumes:
+      # Montajes de solo lectura (ro) para prevenir modificaciones maliciosas desde el contenedor comprometido hacia el host.
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - ./nginx/certs:/etc/nginx/certs:ro
       - ./nginx/html:/usr/share/nginx/html:ro
@@ -46,13 +65,62 @@ services:
       - internal
       - public
 
+  # =====================================================================
+  # 3. NETWORK SECURITY (DNS SINKHOLE)
+  # =====================================================================
+  pihole:
+    image: pihole/pihole:latest
+    container_name: security_pihole
+    restart: unless-stopped
+    environment:
+      TZ: 'America/Mexico_City' # Ajustar según el timezone del servidor
+      WEBPASSWORD: ${PIHOLE_PASSWORD}
+    # Exposición directa de puertos DNS al host.
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      # Se expone el panel web en el puerto 8080 para evitar conflictos con el puerto 80 de Nginx.
+      - "8080:80/tcp"
+    volumes:
+      - pihole_data:/etc/pihole
+      - dnsmasq_data:/etc/dnsmasq.d
+    networks:
+      - public
+    # Sugerencia: Para implementar DNS-over-HTTPS (DoH), se requeriría desplegar un contenedor 'cloudflared' adicional en esta misma red.
+
+  # =====================================================================
+  # 4. OBSERVABILITY & MONITORING
+  # =====================================================================
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: monitoring_kuma
+    restart: unless-stopped
+    volumes:
+      - kuma_data:/app/data
+    ports:
+      - "3001:3001"
+    networks:
+      - internal
+      - public
+    # Al estar en la red 'internal', Uptime Kuma puede monitorear 'app' y 'db' usando la resolución de nombres nativa de Docker (ej. http://app:3000).
+
+# =====================================================================
+# DECLARACIÓN DE VOLÚMENES Y REDES
+# =====================================================================
 volumes:
   app_data:
   db_data:
+  pihole_data:
+  dnsmasq_data:
+  kuma_data:
+  # Opcional: Para backups externos automatizados, se pueden definir drivers NFS o CIFS en lugar del driver local por defecto.
 
 networks:
+  # Red aislada (backend). Sin acceso desde o hacia internet.
   internal:
     driver: bridge
     internal: true
+  
+  # Red expuesta (frontend/servicios externos).
   public:
     driver: bridge

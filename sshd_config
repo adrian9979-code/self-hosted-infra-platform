@@ -55,7 +55,7 @@ SyslogFacility AUTH
 LogLevel VERBOSE
 
 # Lista blanca de usuarios: Solo los usuarios aquí listados tienen permitido el acceso al servicio.
-AllowUsers tu_usuario
+AllowUsers sysadmin # Cambiar "sysadmin" por nombre de usuario. Ejecutar: whoami. 
 # Si se desea permitir grupos enteros: # AllowGroups nombre_del_grupo
 
 # Configuración del subsistema SFTP. 
